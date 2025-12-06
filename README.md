@@ -2,6 +2,8 @@
 
 API for URL shortening built with Go and Fiber.
 
+**Project URL:** [https://roadmap.sh/projects/url-shortening-service](https://roadmap.sh/projects/url-shortening-service)
+
 ## 🚀 How to Run
 
 ### Option 1: Using Docker Compose (Recommended)
