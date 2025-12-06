@@ -1,0 +1,69 @@
+# docker-compose.yml
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+
+      TZ: Africa/Maputo
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - db_net
+
+  app:
+    # Use a imagem do Docker Hub (descomente para usar)
+    image: elton971/url_shotter:latest
+    # Ou faça build local (descomente para usar)
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    container_name: url_shotter
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+    networks:
+      - db_net
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin_ui
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      TZ: Africa/Maputo
+    ports:
+      # Acesse o pgAdmin em http://localhost:8080
+      - "${PGADMIN_PORT:-8080}:80"
+    volumes:
+      # Armazena configurações do pgAdmin
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - db_net
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  db_net:
+    driver: bridge

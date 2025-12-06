@@ -1,0 +1,64 @@
+# Dockerfile All-in-One: App + PostgreSQL + pgAdmin
+FROM golang:alpine AS builder
+
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64 \
+    GOTOOLCHAIN=auto
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN mkdir -p /app/bin && \
+    go build -trimpath -ldflags="-s -w" -o /app/bin/app ./cmd/app
+
+# Imagem final com todos os serviços
+FROM alpine:latest
+
+# Instalar dependências necessárias
+RUN apk add --no-cache \
+    postgresql \
+    postgresql-contrib \
+    postgresql-client \
+    su-exec \
+    bash \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# O usuário postgres já é criado automaticamente pelo pacote postgresql
+# Apenas garantir que os diretórios existam
+
+# Criar diretórios
+RUN mkdir -p /var/lib/postgresql/data && \
+    mkdir -p /var/run/postgresql && \
+    chown -R postgres:postgres /var/lib/postgresql && \
+    chown -R postgres:postgres /var/run/postgresql
+
+# Copiar binário da aplicação
+COPY --from=builder /app/bin/app /app/app
+RUN chmod +x /app/app
+
+# Configurar PostgreSQL
+ENV PGDATA=/var/lib/postgresql/data \
+    POSTGRES_USER=postgres \
+    POSTGRES_PASSWORD=postgres \
+    POSTGRES_DB=url_shotter
+
+# Copiar script de inicialização
+COPY start-all.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expor portas
+EXPOSE 5432 8080
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["/start.sh"]
+
