@@ -110,6 +110,146 @@ The application requires the following environment variables:
 curl http://localhost:8080/health
 ```
 
+## 🛣️ API Routes
+
+### Health Check
+
+**GET** `/health`
+
+Checks if the application is working.
+
+**Response:**
+
+```
+200 OK
+Hello, World!, Olha como o mundo e' maravilhoso
+```
+
+**Example:**
+
+```bash
+curl http://localhost:8080/health
+```
+
+---
+
+### Create URL
+
+**POST** `/api/urls`
+
+Creates a new shortened URL.
+
+**Request Body:**
+
+```json
+{
+  "original_url": "https://example.com"
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": 1,
+  "original_url": "https://example.com",
+  "short_code": "a1b2c3d4",
+  "click_count": 0,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+**Status Codes:**
+
+- `201 Created` - URL created successfully
+- `400 Bad Request` - Invalid URL
+- `500 Internal Server Error` - Error creating URL
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:8080/api/urls \
+  -H "Content-Type: application/json" \
+  -d '{"original_url": "https://example.com"}'
+```
+
+---
+
+### Get URL by ID
+
+**GET** `/api/urls/:id`
+
+Gets information about a URL by its ID or short code.
+
+**Parameters:**
+
+- `id` (path) - ID or short code of the URL
+
+**Response:**
+
+```json
+{
+  "id": 1,
+  "original_url": "https://example.com",
+  "short_code": "a1b2c3d4",
+  "click_count": 5,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - URL found
+- `404 Not Found` - URL not found
+
+**Example:**
+
+```bash
+# By ID
+curl http://localhost:8080/api/urls/1
+
+# By short code
+curl http://localhost:8080/api/urls/a1b2c3d4
+```
+
+---
+
+### Redirect to Original URL
+
+**GET** `/:shortCode`
+
+Redirects to the original URL using the short code. Automatically increments the click counter.
+
+**Parameters:**
+
+- `shortCode` (path) - Short code of the URL
+
+**Response:**
+
+```
+301 Moved Permanently
+Location: https://example.com
+```
+
+**Status Codes:**
+
+- `301 Moved Permanently` - Redirect successful
+- `404 Not Found` - URL not found
+
+**Example:**
+
+```bash
+# Redirects to the original URL
+curl -L http://localhost:8080/a1b2c3d4
+
+# Or access directly in the browser
+# http://localhost:8080/a1b2c3d4
+```
+
+---
+
 ## 📦 Build Images
 
 ### Standard Image (App only)
